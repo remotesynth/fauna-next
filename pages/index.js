@@ -1,65 +1,74 @@
-import Head from 'next/head'
-import styles from '../styles/Home.module.css'
+import { useState, useEffect } from 'react';
+const fetcher = (url) => fetch(url).then((res) => res.json());
 
 export default function Home() {
+  let [shows, setShows] = useState([]);
+  let [newShow, setNewShow] = useState('');
+  useEffect(async () => {
+    let showData = await fetcher('/api/getShows');
+    setShows(showData.data);
+  }, []);
+  function handleNewShow(e) {
+    setNewShow(e.target.value.trim());
+  }
+  async function handleAddShow() {
+    const res = await fetch('/api/addShows', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: newShow,
+      }),
+    });
+    const body = await res.json();
+    // add the new show to the existing list
+    let newShows = shows.slice();
+    newShows.push(body.data);
+    setShows(newShows);
+    setNewShow('');
+  }
+  async function handleUpdateShow(e) {
+    const res = await fetch('/api/updateShow', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: e.target.value,
+        watched: e.target.checked,
+      }),
+    });
+    let newShows = shows.slice();
+    newShows = newShows.map((show) => {
+      if (show.data.title == e.target.value) {
+        return Object.assign({}, show, {
+          data: { title: e.target.value, watched: e.target.checked },
+        });
+      }
+      return show;
+    });
+    setShows(newShows);
+  }
   return (
-    <div className={styles.container}>
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
-
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a>
-      </footer>
-    </div>
-  )
+    <form>
+      <fieldset className="todo-list">
+        <legend className="todo-list__title">Shows I want to watch</legend>
+        <input
+          name="newShow"
+          type="text"
+          value={newShow}
+          onChange={handleNewShow}
+        />
+        <input type="button" value="Add" onClick={handleAddShow} />
+        {shows.map((show, index) => (
+          <label className="todo-list__label" key={index}>
+            <input
+              type="checkbox"
+              name="showWatched"
+              value={show.data.title}
+              onClick={handleUpdateShow}
+              defaultChecked={show.data.watched}
+            />
+            <i className="check"></i>
+            <span>{show.data.title}</span>
+          </label>
+        ))}
+      </fieldset>
+    </form>
+  );
 }
