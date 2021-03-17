@@ -9,7 +9,7 @@ export default function Home() {
     setShows(showData.data);
   }, []);
   function handleNewShow(e) {
-    setNewShow(e.target.value.trim());
+    setNewShow(e.target.value);
   }
   async function handleAddShow() {
     const res = await fetch('/api/addShows', {
